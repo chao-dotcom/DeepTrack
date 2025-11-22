@@ -6,7 +6,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/) [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
-  <img src="data/processed/benchmark_results/MOT20-02_screenshot.png" alt="MOT20-02 Tracking Results" width="800">
+  <img src="docs/images/MOT20-02_screenshot.png" alt="MOT20-02 Tracking Results" width="800">
   <br>
   <em>Tracking results on MOT20-02 sequence (2,782 frames, dense crowd scenario)</em>
 </p>
@@ -81,7 +81,7 @@ This isn't just a wrapper around existing trackers. I **implemented the core alg
 - **Real-time inference** capability (22-30 FPS depending on density)
 
 <p align="center">
-  <img src="docs/results_chart.png" alt="Performance Comparison" width="500">
+  <img src="docs/images/all_metrics_20251122_095028.png" alt="Performance Comparison" width="500">
 </p>
 
 ---

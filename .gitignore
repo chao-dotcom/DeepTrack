@@ -132,6 +132,11 @@ celerybeat.pid
 # mkdocs documentation
 /site
 
+# Documentation images (keep for README)
+!docs/images/*.png
+!docs/images/*.jpg
+!docs/images/*.jpeg
+
 # Temporary files
 *.tmp
 *.temp
