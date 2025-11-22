@@ -1,0 +1,40 @@
+model:
+  architecture: yolov8n  # Options: yolov8n, yolov8s, yolov8m, yolov8l, yolov8x
+  pretrained: true
+  freeze_backbone: false  # Fine-tune entire network
+
+training:
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.001
+  weight_decay: 0.0005
+  warmup_epochs: 3
+  
+  optimizer: AdamW
+  scheduler: CosineAnnealingLR
+  
+  # Loss weights for crowded scenes
+  box_loss_weight: 7.5
+  cls_loss_weight: 0.5
+  dfl_loss_weight: 1.5
+  
+augmentation:
+  mosaic: 0.5  # Reduce for dense crowds
+  mixup: 0.2
+  copy_paste: 0.3  # Copy-paste augmentation for crowds
+  degrees: 10.0
+  translate: 0.2
+  scale: 0.5
+  shear: 2.0
+  perspective: 0.0
+  flipud: 0.0
+  fliplr: 0.5
+  
+hyperparameters:
+  # Optimized for small persons in crowds
+  anchor_t: 4.0
+  iou_threshold: 0.4  # Lower for overlapping boxes
+  conf_threshold: 0.25
+  nms_iou: 0.5
+
+

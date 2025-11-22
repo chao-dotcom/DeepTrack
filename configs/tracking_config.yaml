@@ -1,0 +1,17 @@
+detection:
+  conf_threshold: 0.15  # Lower from 0.25 to detect more people
+  iou_threshold: 0.45   # Add NMS to reduce duplicates
+  model_path: models/checkpoints/yolov8n.pt
+
+tracking:
+  max_dist: 0.32  # Increase from 0.28 for more matching flexibility
+  max_iou_distance: 0.7  # Maximum IOU distance
+  max_age: 50  # Max frames to keep track alive without detection (increased for better persistence)
+  n_init: 5  # Reduce from 7 to 5 for faster confirmation
+  min_confidence: 0.15  # Match detection threshold
+
+reid:
+  model_path: models/checkpoints/reid_best.pth  # Optional, can be None
+  enabled: true
+
+

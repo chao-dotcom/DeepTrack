@@ -1,0 +1,26 @@
+# Deployment configuration
+
+models:
+  detection_url: null  # URL to download detection model (optional)
+  reid_url: null       # URL to download ReID model (optional)
+
+deployment:
+  method: docker      # 'docker' or 'local'
+  device: cuda        # 'cuda' or 'cpu'
+  port: 8000
+  optimize: false     # Whether to optimize models during deployment
+  run_tests: true     # Whether to run tests before deployment
+
+# Redis configuration
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+
+# Celery configuration
+celery:
+  broker_url: redis://localhost:6379/0
+  result_backend: redis://localhost:6379/0
+  worker_concurrency: 2
+
+

@@ -1,0 +1,170 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+venv_new/
+env_new/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Data files (large datasets)
+data/raw/MOT20/
+data/raw/*/
+!data/raw/README.md
+data/processed/*/
+!data/processed/.gitkeep
+!data/processed/README.md
+
+# Model files (large binary files)
+models/checkpoints/*.pt
+models/checkpoints/*.pth
+models/checkpoints/*.onnx
+models/checkpoints/*.trt
+models/exports/*
+models/optimized/*
+!models/checkpoints/.gitkeep
+!models/exports/.gitkeep
+!models/optimized/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.trt
+
+# Output files
+outputs/
+results/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.json
+!configs/**/*.json
+!package.json
+!tsconfig.json
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+*.cover
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Weights & Biases
+wandb/
+
+# TensorBoard
+runs/
+*.tfevents.*
+
+# Docker
+.dockerignore
+
+# Redis
+dump.rdb
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Large result files
+data/processed/demo_results/
+data/processed/real_benchmark_results/
+
+# Keep structure but ignore content
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/checkpoints/.gitkeep
+!models/exports/.gitkeep
+!models/optimized/.gitkeep

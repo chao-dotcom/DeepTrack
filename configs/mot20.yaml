@@ -1,0 +1,14 @@
+# YOLO format dataset configuration for MOT20
+path: data/raw/MOT20/MOT20
+train: train
+val: train  # Use train for validation if no separate val set
+test: test
+
+# Number of classes
+nc: 1
+
+# Class names
+names:
+  0: person
+
+

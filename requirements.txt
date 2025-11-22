@@ -1,0 +1,51 @@
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+pillow>=8.3.0
+
+# Deep Learning
+torch>=1.9.0
+torchvision>=0.10.0
+ultralytics>=8.0.0  # For YOLOv8 person detection
+# tensorflow>=2.6.0  # Uncomment if using TensorFlow
+
+# API Framework
+fastapi>=0.68.0
+uvicorn[standard]>=0.15.0
+pydantic>=1.8.0
+
+# Web UI (if using Streamlit)
+streamlit>=1.0.0
+
+# Utilities
+pyyaml>=5.4.0
+python-dotenv>=0.19.0
+tqdm>=4.62.0
+
+# Tracking
+scipy>=1.7.0  # For Kalman filtering and optimization
+scikit-learn>=1.0.0  # For clustering (trajectory analysis, density estimation)
+
+# Evaluation
+motmetrics>=1.2.0  # For MOT evaluation (optional)
+
+# Production API (optional)
+redis>=4.0.0  # For job queue
+celery>=5.2.0  # For background tasks
+
+# Optimization (optional)
+onnxruntime>=1.10.0  # For ONNX inference
+# tensorrt  # Install separately if using TensorRT
+
+# Research extensions (optional)
+# torch-geometric  # For GNN tracker (install separately)
+
+# Utilities
+albumentations>=1.1.0  # For data augmentation
+wandb>=0.12.0  # For experiment tracking (optional)
+
+# Development
+pytest>=6.2.0
+black>=21.0.0
+flake8>=3.9.0
+

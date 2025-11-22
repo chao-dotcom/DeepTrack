@@ -1,0 +1,29 @@
+# Deployment Configuration
+server:
+  host: "127.0.0.1"
+  port: 8000
+  workers: 1
+
+api:
+  enable_cors: true
+  cors_origins: ["*"]
+  rate_limit: 100  # requests per minute
+
+model:
+  checkpoint_path: "models/checkpoints/"
+  device: "cpu"  # or "cuda" for GPU
+  batch_size: 1
+
+inference:
+  confidence_threshold: 0.5
+  nms_threshold: 0.4
+  max_track_age: 30  # frames
+
+storage:
+  data_dir: "data/"
+  output_dir: "data/processed/"
+
+logging:
+  level: "INFO"
+  file: "logs/app.log"
+
