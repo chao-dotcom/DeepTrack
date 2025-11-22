@@ -1,10 +1,9 @@
-# 🎯 Multi-Object Tracking System
+# Multi-Object Tracking System
 
 > Production-ready people tracking with DeepSORT, Transformer-based tracking, 
 > and multi-camera re-identification. Evaluated on MOT20 benchmark.
 
-[![Python 3.8+](badge)](link) [![PyTorch](badge)](link) 
-[![License: MIT](badge)](link)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/) [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)](https://pytorch.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
   <img src="data/processed/benchmark_results/MOT20-02_screenshot.png" alt="MOT20-02 Tracking Results" width="800">
@@ -17,31 +16,31 @@
     <img src="https://img.youtube.com/vi/WIFTWMEF9Es/maxresdefault.jpg" alt="Demo Video" width="600">
   </a>
   <br>
-  <strong>📹 Watch Demo Video</strong> - <a href="https://youtu.be/WIFTWMEF9Es">YouTube Link</a>
+  <strong>Watch Demo Video</strong> - <a href="https://youtu.be/WIFTWMEF9Es">YouTube Link</a>
 </p>
 
 ---
 
-## 🌟 What Makes This Different?
+## What Makes This Different?
 
 This isn't just a wrapper around existing trackers. I **implemented the core algorithms**:
 
-- ✅ **DeepSORT Tracking Algorithm** (~450 LOC)
+- **DeepSORT Tracking Algorithm** (~450 LOC)
   - Kalman filtering for state estimation
   - Cascade matching strategy
   - Appearance feature association
   
-- ✅ **Transformer-Based Tracker** (~200 LOC)
+- **Transformer-Based Tracker** (~200 LOC)
   - Novel architecture with cross-attention
   - End-to-end learnable tracking
   - Research extension for improved performance
 
-- ✅ **Person Re-Identification** (~200 LOC)
+- **Person Re-Identification** (~200 LOC)
   - Custom model: ResNet50 + Channel Attention
   - Triplet loss for metric learning
   - Cross-camera identity preservation
 
-- ✅ **Multi-Camera Tracking** (~300 LOC)
+- **Multi-Camera Tracking** (~300 LOC)
   - Global ID management
   - Homography-based coordinate transform
   - Cross-camera appearance matching
@@ -50,7 +49,7 @@ This isn't just a wrapper around existing trackers. I **implemented the core alg
 
 ---
 
-## 📊 Performance & Results
+## Performance & Results
 
 ### Benchmark Evaluation (MOT20 Dataset)
 
@@ -68,18 +67,18 @@ This isn't just a wrapper around existing trackers. I **implemented the core alg
 | **Ground Truth Objects** | 14,150 | 97,824 | Total objects tracked |
 
 **Key Achievements:**
-- ✅ **High MOTP (77.28%)**: Excellent localization accuracy
-- ✅ **Good IDF1 (48.50%)**: Strong identity preservation
-- ✅ **Scalable**: Better performance on longer sequences (MOT20-02)
-- ✅ **Dense Crowd Handling**: Successfully tracks in crowded scenarios
+- **High MOTP (77.28%)**: Excellent localization accuracy
+- **Good IDF1 (48.50%)**: Strong identity preservation
+- **Scalable**: Better performance on longer sequences (MOT20-02)
+- **Dense Crowd Handling**: Successfully tracks in crowded scenarios
 
 ### Real-World Performance
 
-- ✅ **37,925 matches** processed on MOT20-02 (2,782 frames)
-- ✅ **55,818 total tracks** across dense crowd scenarios
-- ✅ **High precision (67.15%)** with good localization (77.28% MOTP)
-- ✅ **Multi-camera support** with cross-view re-identification
-- ✅ **Real-time inference** capability (22-30 FPS depending on density)
+- **37,925 matches** processed on MOT20-02 (2,782 frames)
+- **55,818 total tracks** across dense crowd scenarios
+- **High precision (67.15%)** with good localization (77.28% MOTP)
+- **Multi-camera support** with cross-view re-identification
+- **Real-time inference** capability (22-30 FPS depending on density)
 
 <p align="center">
   <img src="docs/results_chart.png" alt="Performance Comparison" width="500">
@@ -87,7 +86,7 @@ This isn't just a wrapper around existing trackers. I **implemented the core alg
 
 ---
 
-## 🔬 Technical Deep Dive
+## Technical Deep Dive
 
 ### System Architecture
 ```
@@ -163,7 +162,7 @@ class TransformerTracker(nn.Module):
 
 [Continue with more sections...]
 
-## 🎬 Demo & Visualization
+## Demo & Visualization
 
 ### Demo Video
 
@@ -174,7 +173,7 @@ Watch the system in action:
     <img src="https://img.youtube.com/vi/WIFTWMEF9Es/maxresdefault.jpg" alt="People Tracking Demo" width="600">
   </a>
   <br>
-  <a href="https://youtu.be/WIFTWMEF9Es"><strong>▶️ Watch Full Demo on YouTube</strong></a>
+  <a href="https://youtu.be/WIFTWMEF9Es"><strong>Watch Full Demo on YouTube</strong></a>
 </p>
 
 
@@ -331,7 +330,7 @@ You have several options for test videos:
 - **Camera access issues**: Check camera permissions and availability
 - **No video files**: You can test with webcam (`--input 0`) or download sample videos from MOT Challenge
 
-## 🎬 Demo Results
+## Demo Results
 
 See real tracking results on MOT20 benchmark:
 - **Demo Video:** `data/processed/demo_results/MOT20-01_demo_20251120_225707.mp4`
@@ -340,13 +339,13 @@ See real tracking results on MOT20 benchmark:
 - **Showcase:** See [GITHUB_SHOWCASE.md](GITHUB_SHOWCASE.md) for impressive demonstrations
 - **Benchmark Results:** See [results/](results/) for quantitative metrics and comparisons
 
-## 📊 Key Metrics
+## Key Metrics
 
-- ✅ **24 simultaneous tracks** - Handles dense crowds
-- ✅ **4,553 detections** - High reliability
-- ✅ **MOT20 benchmark** - Industry-standard evaluation
-- ✅ **Real-time processing** - Production-ready performance
-- ✅ **HD video support** - 1920×1080 resolution
+- **24 simultaneous tracks** - Handles dense crowds
+- **4,553 detections** - High reliability
+- **MOT20 benchmark** - Industry-standard evaluation
+- **Real-time processing** - Production-ready performance
+- **HD video support** - 1920×1080 resolution
 
 ### Quantitative Results
 
