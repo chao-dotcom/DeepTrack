@@ -173,3 +173,5 @@ data/processed/real_benchmark_results/
 !models/checkpoints/.gitkeep
 !models/exports/.gitkeep
 !models/optimized/.gitkeep
+
+docs-zh/
