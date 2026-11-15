@@ -16,11 +16,12 @@ def main():
                        default='outputs/mot_results',
                        help='Path to save evaluation results')
     parser.add_argument('--detection-model', type=str,
-                       default='models/checkpoints/yolov8n.pt',
+                       default='models/checkpoints/yolov8x.pt',
                        help='Path to detection model')
     parser.add_argument('--reid-model', type=str,
                        help='Path to ReID model (optional)')
     parser.add_argument('--config', type=str,
+                       default='configs/tracking_config.yaml',
                        help='Path to tracking config file')
     
     args = parser.parse_args()
@@ -30,15 +31,7 @@ def main():
         with open(args.config, 'r') as f:
             config = yaml.safe_load(f)
     else:
-        config = {
-            'detection': {'conf_threshold': 0.25},
-            'tracking': {
-                'max_dist': 0.2,
-                'max_iou_distance': 0.7,
-                'max_age': 30,
-                'n_init': 3
-            }
-        }
+        raise FileNotFoundError(f"Tracking config not found: {args.config}")
     
     # Initialize tracker
     print("Initializing tracker...")
@@ -73,5 +66,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 

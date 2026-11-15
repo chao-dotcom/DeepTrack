@@ -16,9 +16,9 @@ def download_yolo_model():
         model_dir = Path("models/checkpoints")
         model_dir.mkdir(parents=True, exist_ok=True)
         
-        # Download YOLOv8n (nano - smallest, fastest)
-        # Options: 'yolov8n.pt', 'yolov8s.pt', 'yolov8m.pt', 'yolov8l.pt', 'yolov8x.pt'
-        model_name = 'yolov8n.pt'
+        # Use the large checkpoint for small, dense MOT20 pedestrians.
+        # Use yolov8n.pt explicitly for a fast smoke test.
+        model_name = 'yolov8x.pt'
         print(f"Downloading {model_name}...")
         model = YOLO(model_name)  # This will auto-download if not present
         
@@ -93,4 +93,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

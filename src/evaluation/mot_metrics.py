@@ -11,6 +11,15 @@ except ImportError:
     MOTMETRICS_AVAILABLE = False
     print("Warning: motmetrics not available. Install with: pip install motmetrics")
 
+try:
+    from trackeval.metrics import HOTA as TrackEvalHOTA
+    from trackeval.metrics import CLEAR as TrackEvalCLEAR
+    from trackeval.metrics import Identity as TrackEvalIdentity
+except ImportError:
+    TrackEvalHOTA = None
+    TrackEvalCLEAR = None
+    TrackEvalIdentity = None
+
 
 class MOTEvaluator:
     """
@@ -19,7 +28,9 @@ class MOTEvaluator:
     """
     def __init__(self):
         if MOTMETRICS_AVAILABLE:
-            self.acc = mm.MOTAccumulator(auto_id=True)
+            # Frame IDs are supplied explicitly in update(), so automatic
+            # frame numbering must be disabled.
+            self.acc = mm.MOTAccumulator(auto_id=False)
         else:
             self.acc = None
             print("Warning: Using simplified evaluation (install motmetrics for full metrics)")
@@ -48,7 +59,17 @@ class MOTEvaluator:
         
         # Compute distance matrix (IoU-based)
         if len(gt_boxes) > 0 and len(pred_boxes) > 0:
-            distances = mm.distances.iou_matrix(gt_boxes, pred_boxes, max_iou=0.5)
+            # Keep this local instead of calling motmetrics' NumPy-1.x helper,
+            # which uses the removed np.asfarray API under NumPy 2.
+            distances = np.full((len(gt_boxes), len(pred_boxes)), np.nan)
+            for gt_index, gt_box in enumerate(gt_boxes):
+                for pred_index, pred_box in enumerate(pred_boxes):
+                    iou = self._compute_iou(
+                        [*gt_box[:2], gt_box[2], gt_box[3]],
+                        [*pred_box[:2], pred_box[2], pred_box[3]],
+                    )
+                    if iou >= 0.5:
+                        distances[gt_index, pred_index] = 1.0 - iou
         else:
             distances = np.empty((len(gt_boxes), len(pred_boxes)))
         
@@ -72,13 +93,72 @@ class MOTEvaluator:
                 'num_misses',
                 'mota',
                 'motp',
+                'idf1',
                 'precision',
-                'recall'
+                'recall',
+                'num_fragmentations',
+                'mostly_tracked',
+                'mostly_lost'
             ],
             name='Overall'
         )
         
         return summary
+
+    @staticmethod
+    def compute_hota(
+        gt_by_frame: Dict[int, List],
+        pred_by_frame: Dict[int, List],
+    ) -> Optional[Dict[str, float]]:
+        """Compute TrackEval HOTA, DetA, and AssA for one sequence."""
+        if TrackEvalHOTA is None or TrackEvalCLEAR is None or TrackEvalIdentity is None:
+            return None
+
+        gt_ids = sorted({int(item[4]) for items in gt_by_frame.values() for item in items})
+        pred_ids = sorted(
+            {int(item[4]) for items in pred_by_frame.values() for item in items}
+        )
+        gt_index = {track_id: index for index, track_id in enumerate(gt_ids)}
+        pred_index = {track_id: index for index, track_id in enumerate(pred_ids)}
+        frames = sorted(set(gt_by_frame) | set(pred_by_frame))
+        gt_arrays = []
+        pred_arrays = []
+        similarities = []
+        for frame_id in frames:
+            gt = gt_by_frame.get(frame_id, [])
+            pred = pred_by_frame.get(frame_id, [])
+            gt_arrays.append(np.array([gt_index[int(item[4])] for item in gt], dtype=int))
+            pred_arrays.append(
+                np.array([pred_index[int(item[4])] for item in pred], dtype=int)
+            )
+            similarity = np.zeros((len(gt), len(pred)), dtype=float)
+            for gt_index_local, gt_item in enumerate(gt):
+                for pred_index_local, pred_item in enumerate(pred):
+                    similarity[gt_index_local, pred_index_local] = MOTEvaluator._compute_iou(
+                        gt_item[:4], pred_item[:4]
+                    )
+            similarities.append(similarity)
+
+        data = {
+            "gt_ids": gt_arrays,
+            "tracker_ids": pred_arrays,
+            "similarity_scores": similarities,
+            "num_gt_dets": sum(len(items) for items in gt_by_frame.values()),
+            "num_tracker_dets": sum(len(items) for items in pred_by_frame.values()),
+            "num_gt_ids": len(gt_ids),
+            "num_tracker_ids": len(pred_ids),
+            "num_timesteps": len(frames),
+        }
+        result = TrackEvalHOTA().eval_sequence(data)
+        clear = TrackEvalCLEAR().eval_sequence(data)
+        identity = TrackEvalIdentity().eval_sequence(data)
+        return {
+            "hota": float(np.mean(result["HOTA"])),
+            "deta": float(np.mean(result["DetA"])),
+            "assa": float(np.mean(result["AssA"])),
+            "trackeval_mota": float(clear["MOTA"]),
+            "trackeval_idf1": float(identity["IDF1"]),
+        }
     
     def _compute_simplified_metrics(self) -> Dict:
         """Simplified metrics without motmetrics"""
@@ -98,7 +178,7 @@ class MOTEvaluator:
         Measures identity preservation quality
         """
         # Load ground truth
-        gt_data = self._load_mot_format(gt_file)
+        gt_data = self._load_mot_format(gt_file, filter_gt=True)
         
         # Load predictions
         pred_data = self._load_mot_format(pred_file)
@@ -108,7 +188,7 @@ class MOTEvaluator:
         
         return idf1_score
     
-    def _load_mot_format(self, filepath: str) -> Dict[int, List[Dict]]:
+    def _load_mot_format(self, filepath: str, filter_gt: bool = False) -> Dict[int, List[Dict]]:
         """Load MOT format tracking file"""
         data = defaultdict(list)
         
@@ -122,9 +202,17 @@ class MOTEvaluator:
                     continue
                 
                 try:
-                    frame = int(parts[0])
+                    frame = int(parts[0])  # MOTChallenge frames are 1-based
                     track_id = int(parts[1])
                     x, y, w, h = map(float, parts[2:6])
+
+                    # MOT20 GT columns 7/8 are the consider flag and class.
+                    # Prediction files use -1 in these columns.
+                    if filter_gt and len(parts) >= 8:
+                        consider = float(parts[6])
+                        class_id = int(float(parts[7]))
+                        if consider != 1 or class_id != 1:
+                            continue
                     
                     data[frame].append({
                         'id': track_id,
@@ -193,7 +281,8 @@ class MOTEvaluator:
         
         return idf1
     
-    def _compute_iou(self, box1: List[float], box2: List[float]) -> float:
+    @staticmethod
+    def _compute_iou(box1: List[float], box2: List[float]) -> float:
         """Compute IoU between two boxes"""
         x1 = max(box1[0], box2[0])
         y1 = max(box1[1], box2[1])
@@ -367,7 +456,10 @@ class MOTBenchmark:
                     x, y, w, h = map(float, parts[2:6])
                     conf = float(parts[6]) if len(parts) > 6 else 1.0
                     
-                    if conf > 0:  # Only consider valid annotations
+                    # MOT20: evaluate only considered pedestrian annotations.
+                    consider = float(parts[6]) if len(parts) > 6 else 1.0
+                    class_id = int(float(parts[7])) if len(parts) > 7 else 1
+                    if conf > 0 and consider == 1 and class_id == 1:
                         gt_data[frame].append([x, y, x+w, y+h, track_id])
                 except (ValueError, IndexError):
                     continue
@@ -416,5 +508,3 @@ if __name__ == '__main__':
     )
     
     all_results, avg_results = benchmark.evaluate_all()
-
-

@@ -54,19 +54,23 @@ class SimpleTracker:
         
         # Calculate centroids for new detections
         input_centroids = []
+        is_array_input = isinstance(detections, np.ndarray)
         for det in detections:
-            centroid = self._calculate_centroid(det['bbox'])
+            bbox = det[:4] if is_array_input else det['bbox']
+            centroid = self._calculate_centroid(bbox)
             input_centroids.append(centroid)
         
         # If no existing objects, register all detections
         if len(self.objects) == 0:
             for det, centroid in zip(detections, input_centroids):
+                bbox = det[:4].tolist() if is_array_input else det['bbox']
                 self.objects[self.next_id] = {
                     'centroid': centroid,
-                    'bbox': det['bbox'],
+                    'bbox': bbox,
                     'disappeared': 0
                 }
-                det['id'] = self.next_id
+                if not is_array_input:
+                    det['id'] = self.next_id
                 self.track_history[self.next_id].append(centroid)
                 self.next_id += 1
         else:
@@ -111,23 +115,27 @@ class SimpleTracker:
             # Update matched objects
             for obj_id, det_idx in matches:
                 det = detections[det_idx]
+                bbox = det[:4].tolist() if is_array_input else det['bbox']
                 centroid = input_centroids[det_idx]
                 self.objects[obj_id]['centroid'] = centroid
-                self.objects[obj_id]['bbox'] = det['bbox']
+                self.objects[obj_id]['bbox'] = bbox
                 self.objects[obj_id]['disappeared'] = 0
-                det['id'] = obj_id
+                if not is_array_input:
+                    det['id'] = obj_id
                 self.track_history[obj_id].append(centroid)
             
             # Register new objects for unmatched detections
             for j, det in enumerate(detections):
                 if j not in used_detection_indices:
                     centroid = input_centroids[j]
+                    bbox = det[:4].tolist() if is_array_input else det['bbox']
                     self.objects[self.next_id] = {
                         'centroid': centroid,
-                        'bbox': det['bbox'],
+                        'bbox': bbox,
                         'disappeared': 0
                     }
-                    det['id'] = self.next_id
+                    if not is_array_input:
+                        det['id'] = self.next_id
                     self.track_history[self.next_id].append(centroid)
                     self.next_id += 1
             
@@ -138,10 +146,14 @@ class SimpleTracker:
                     if self.objects[obj_id]['disappeared'] > self.max_disappeared:
                         del self.objects[obj_id]
         
+        if is_array_input:
+            return [
+                [*self.objects[obj_id]['bbox'], obj_id]
+                for obj_id in self.objects
+                if self.objects[obj_id]['disappeared'] == 0
+            ]
         return detections
     
     def get_track_count(self) -> int:
         """Get current number of active tracks"""
         return len(self.objects)
-
-

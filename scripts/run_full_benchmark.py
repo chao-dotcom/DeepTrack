@@ -28,7 +28,8 @@ def run_benchmark():
         "scripts/evaluate_benchmark.py",
         "--gt-path", str(mot20_path),
         "--output-path", "outputs/mot_results",
-        "--detection-model", "models/checkpoints/yolov8n.pt"
+        "--detection-model", "models/checkpoints/yolov8x.pt",
+        "--config", "configs/tracking_config.yaml"
     ]
     
     print(f"\nRunning: {' '.join(cmd)}\n")
@@ -100,4 +101,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

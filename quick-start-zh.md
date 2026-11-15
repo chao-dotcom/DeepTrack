@@ -14,7 +14,7 @@
 
 ```bash
 # 进入项目目录
-cd people-tracking-system
+cd DeepTrack
 
 # 创建虚拟环境（推荐）
 python -m venv venv
@@ -38,7 +38,8 @@ pip install -r requirements.txt
 python scripts/download_models.py
 ```
 
-模型将保存到 `models/checkpoints/yolov8n.pt`。
+默认模型为 `models/checkpoints/yolov8x.pt`；仅在快速冒烟测试时使用
+`yolov8n.pt`。
 
 ## 快速测试
 
@@ -137,4 +138,3 @@ python -m src.inference.main \
 ---
 
 **准备开始跟踪！** 🚀
-

@@ -1,0 +1,68 @@
+dataset:
+  root: data/raw/MOT20/MOT20/train
+  sequences: [MOT20-01]
+  iou_threshold: 0.5
+
+run:
+  output_dir: outputs/mot_measurements_smoke
+  max_frames: 10
+  wandb: false
+  wandb_project: deeptrack-mot20
+
+variants:
+  smoke_yolov8n_640:
+    model_path: yolov8n.pt
+    detection:
+      conf_threshold: 0.5
+      iou_threshold: 0.45
+      imgsz: 640
+      max_det: 300
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 50
+      n_init: 3
+      high_confidence: 0.5
+  smoke_yolov8n_1280:
+    model_path: yolov8n.pt
+    detection:
+      conf_threshold: 0.15
+      iou_threshold: 0.65
+      imgsz: 1280
+      max_det: 1000
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 50
+      n_init: 3
+      high_confidence: 0.5
+  smoke_yolov8n_1280_ninit1:
+    model_path: yolov8n.pt
+    detection:
+      conf_threshold: 0.15
+      iou_threshold: 0.65
+      imgsz: 1280
+      max_det: 1000
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 50
+      n_init: 1
+      high_confidence: 0.5
+  smoke_yolov8n_1280_ninit2:
+    model_path: yolov8n.pt
+    detection:
+      conf_threshold: 0.15
+      iou_threshold: 0.65
+      imgsz: 1280
+      max_det: 1000
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 50
+      n_init: 2
+      high_confidence: 0.5

@@ -1,4 +1,4 @@
-"""YOLOv8 Person Detector"""
+"""YOLO person detector configured for dense MOT20 scenes."""
 import cv2
 import numpy as np
 from pathlib import Path
@@ -8,15 +8,28 @@ from typing import List, Tuple, Optional
 class YOLODetector:
     """YOLOv8-based person detector"""
     
-    def __init__(self, model_path: Optional[str] = None, confidence_threshold: float = 0.5):
+    def __init__(
+        self,
+        model_path: Optional[str] = None,
+        confidence_threshold: float = 0.15,
+        nms_iou: float = 0.65,
+        image_size: int = 1280,
+        classes: Optional[List[int]] = None,
+    ):
         """
         Initialize YOLO detector
         
         Args:
-            model_path: Path to YOLOv8 model. If None, uses 'yolov8n.pt' (auto-downloads)
+            model_path: Path to a YOLO model. If None, uses 'yolov8x.pt' (auto-downloads)
             confidence_threshold: Minimum confidence for detections
+            nms_iou: NMS IoU threshold. Higher values retain overlapping people.
+            image_size: Inference image size in pixels.
+            classes: Class IDs to retain. Defaults to person (COCO class 0).
         """
         self.confidence_threshold = confidence_threshold
+        self.nms_iou = nms_iou
+        self.image_size = image_size
+        self.classes = [0] if classes is None else classes
         self.model = None
         self.model_path = model_path
         
@@ -29,8 +42,8 @@ class YOLODetector:
             from ultralytics import YOLO
             
             if self.model_path is None:
-                # Use default model (will auto-download)
-                self.model_path = 'yolov8n.pt'
+                # Use a large model by default for small, crowded MOT20 pedestrians.
+                self.model_path = 'yolov8x.pt'
             
             print(f"Loading YOLOv8 model: {self.model_path}")
             self.model = YOLO(self.model_path)
@@ -60,7 +73,14 @@ class YOLODetector:
             return []
         
         # Run inference
-        results = self.model(frame, verbose=False)
+        results = self.model(
+            frame,
+            conf=self.confidence_threshold,
+            iou=self.nms_iou,
+            imgsz=self.image_size,
+            classes=self.classes,
+            verbose=False,
+        )
         
         detections = []
         
@@ -69,7 +89,7 @@ class YOLODetector:
             boxes = result.boxes
             for box in boxes:
                 # Filter for person class (class 0 in COCO)
-                if int(box.cls) == 0 and float(box.conf) >= self.confidence_threshold:
+                if int(box.cls) in self.classes and float(box.conf) >= self.confidence_threshold:
                     # Get bounding box coordinates
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     
@@ -111,5 +131,4 @@ class YOLODetector:
                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
         
         return frame_copy
-
 

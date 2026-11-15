@@ -162,7 +162,8 @@ class Track:
     """
     A single track with Kalman filtering and feature history
     """
-    def __init__(self, detection, track_id, n_init=3, max_age=30, feature=None):
+    def __init__(self, detection=None, track_id=0, n_init=3, max_age=30,
+                 feature=None, mean=None, covariance=None):
         self.track_id = track_id
         self.hits = 1
         self.age = 1
@@ -175,7 +176,13 @@ class Track:
         
         # Initialize Kalman filter
         self.kf = KalmanFilter()
-        self.mean, self.covariance = self.kf.initiate(detection)
+        if mean is not None and covariance is not None:
+            self.mean = np.asarray(mean, dtype=float)
+            self.covariance = np.asarray(covariance, dtype=float)
+        elif detection is not None:
+            self.mean, self.covariance = self.kf.initiate(detection)
+        else:
+            raise ValueError("Track requires either detection or mean and covariance")
         
         # Add first feature
         if feature is not None:
@@ -235,7 +242,10 @@ class DeepSORT:
     DeepSORT tracker with appearance features and Kalman filtering
     """
     def __init__(self, reid_model=None, max_dist=0.2, max_iou_distance=0.7, 
-                 max_age=30, n_init=3, nn_budget=100):
+                 max_age=30, n_init=3, nn_budget=100, high_confidence=0.5,
+                 min_confidence=0.15, iou_match_threshold=0.25,
+                 gating_threshold=9.4877, appearance_weight=0.8,
+                 expanded_iou_scale=1.0, association_mode="two_stage"):
         """
         Args:
             reid_model: ReID model for feature extraction (optional)
@@ -257,9 +267,21 @@ class DeepSORT:
         self.max_age = max_age
         self.n_init = n_init
         self.nn_budget = nn_budget
+        self.high_confidence = high_confidence
+        self.min_confidence = min_confidence
+        self.iou_match_threshold = iou_match_threshold
+        self.gating_threshold = gating_threshold
+        self.appearance_weight = appearance_weight
+        self.expanded_iou_scale = expanded_iou_scale
+        self.association_mode = association_mode
         
         self.tracks = []
         self.next_id = 1
+        self.last_update_stats = {
+            "matched_existing_tracks": [],
+            "tentative_or_confirmed_output": [],
+            "confirmed_output": [],
+        }
         
         # Transform for ReID input
         if TORCHVISION_AVAILABLE:
@@ -290,8 +312,7 @@ class DeepSORT:
         
         # Filter by confidence - match detection threshold (0.15)
         if len(detections) > 0 and detections.shape[1] >= 5:
-            min_conf = 0.15  # Match detection threshold to avoid discarding detections
-            detections = detections[detections[:, 4] >= min_conf]
+            detections = detections[detections[:, 4] >= self.min_confidence]
         
         # Extract appearance features
         features = self._extract_features(detections, frame)
@@ -303,9 +324,20 @@ class DeepSORT:
         for track in self.tracks:
             track.predict()
         
-        # Match detections to tracks using cascade matching (Priority 4)
-        matched, unmatched_tracks, unmatched_detections = self._cascade_match(
-            detection_measurements, features, detections)
+        # Match strong detections first, then recover occluded tracks with weak
+        # detections using IoU (ByteTrack-style association).
+        if self.association_mode == "legacy":
+            matched, unmatched_tracks, unmatched_detections = self._cascade_match(
+                detection_measurements, features, detections
+            )
+        elif self.association_mode == "two_stage":
+            matched, unmatched_tracks, unmatched_detections = self._byte_track_match(
+                detection_measurements, features, detections
+            )
+        else:
+            raise ValueError(
+                f"Unknown association mode: {self.association_mode!r}"
+            )
         
         # Update matched tracks
         for track_idx, detection_idx in matched:
@@ -319,25 +351,80 @@ class DeepSORT:
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
         
-        # Create new tracks for unmatched detections
+        # Do not initialize tracks from weak detections: they are useful for
+        # recovering existing tracks but are too noisy to start identities.
         for detection_idx in unmatched_detections:
+            if (
+                self.association_mode == "two_stage"
+                and detections[detection_idx, 4] < self.high_confidence
+            ):
+                continue
             feature = features[detection_idx] if len(features) > 0 else None
             self._initiate_track(
                 detection_measurements[detection_idx],
                 feature
             )
         
-        # Remove deleted tracks
+        matched_existing_track_indices = {track_idx for track_idx, _ in matched}
+        matched_existing_track_boxes = [
+            self.tracks[index].to_tlbr().tolist()
+            for index in matched_existing_track_indices
+            if index < len(self.tracks) and self.tracks[index].time_since_update == 0
+        ]
+        # Remove deleted tracks after collecting association-stage statistics.
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
-        
+
+        tentative_or_confirmed_boxes = [
+            track.to_tlbr().tolist()
+            for track in self.tracks
+            if track.time_since_update == 0
+        ]
         # Return active tracks
         results = []
         for track in self.tracks:
             if track.is_confirmed() and track.time_since_update <= 1:
                 bbox = track.to_tlbr()
                 results.append([*bbox, track.track_id])
-        
+
+        self.last_update_stats = {
+            "matched_existing_tracks": matched_existing_track_boxes,
+            "tentative_or_confirmed_output": tentative_or_confirmed_boxes,
+            "confirmed_output": [result[:4] for result in results],
+        }
         return results
+
+    def _byte_track_match(self, measurements, features, detections):
+        """Associate high-confidence detections, then match low-confidence ones by IoU."""
+        high_threshold = getattr(self, 'high_confidence', 0.5)
+        high_indices = [i for i, det in enumerate(detections)
+                        if det[4] >= high_threshold]
+        low_indices = [i for i, det in enumerate(detections)
+                       if self.min_confidence <= det[4] < high_threshold]
+
+        high_measurements = measurements[high_indices] if high_indices else np.empty((0, 4))
+        high_features = features[high_indices] if len(features) > 0 and high_indices else np.array([])
+        matches, unmatched_tracks, unmatched_high = self._match(
+            high_measurements, high_features)
+        matches = [(track_idx, high_indices[det_idx]) for track_idx, det_idx in matches]
+        unmatched_detections = [high_indices[i] for i in unmatched_high]
+
+        if unmatched_tracks and low_indices:
+            low_boxes = detections[low_indices]
+            local_matches = self._iou_match(
+                [self.tracks[i] for i in unmatched_tracks], low_boxes)
+            for local_track_idx, local_det_idx in local_matches:
+                track_idx = unmatched_tracks[local_track_idx]
+                detection_idx = low_indices[local_det_idx]
+                matches.append((track_idx, detection_idx))
+            matched_low = {low_indices[local_det_idx] for _, local_det_idx in local_matches}
+            unmatched_tracks = [
+                track_idx for local_idx, track_idx in enumerate(unmatched_tracks)
+                if local_idx not in {match[0] for match in local_matches}
+            ]
+            unmatched_detections.extend(
+                index for index in low_indices if index not in matched_low)
+
+        return matches, unmatched_tracks, unmatched_detections
     
     def _extract_features(self, detections, frame):
         """Extract ReID features from detections"""
@@ -526,16 +613,16 @@ class DeepSORT:
                 appearance_distance = self._compute_appearance_distance(
                     track_features, features)
                 
-                # Combine distances - STRONGLY prioritize appearance for better ID preservation
-                # Use 0.2 motion + 0.8 appearance to strongly prioritize appearance matching
-                # This reduces ID switches by relying more on appearance than motion
-                cost_matrix[i] = 0.2 * gating_distance + 0.8 * appearance_distance
+                cost_matrix[i] = (
+                    (1.0 - self.appearance_weight) * gating_distance
+                    + self.appearance_weight * appearance_distance
+                )
             else:
                 # If no appearance features, use only motion (less reliable)
                 cost_matrix[i] = gating_distance
             
             # Apply gate - use stricter threshold for better matching
-            cost_matrix[i][gating_distance > 9.4877] = 1e5  # Chi-square threshold
+            cost_matrix[i][gating_distance > self.gating_threshold] = 1e5
         
         return cost_matrix
     
@@ -600,6 +687,7 @@ class DeepSORT:
         iou_matrix = np.zeros((len(tracks), len(detections)))
         for i, track in enumerate(tracks):
             track_bbox = track.to_tlbr()
+            track_bbox = self._expand_bbox(track_bbox)
             for j, det in enumerate(detections):
                 det_bbox = det[:4]  # [x1, y1, x2, y2]
                 iou_matrix[i, j] = self._compute_iou(track_bbox, det_bbox)
@@ -609,10 +697,24 @@ class DeepSORT:
         
         matches = []
         for track_idx, det_idx in zip(track_indices, det_indices):
-            if iou_matrix[track_idx, det_idx] > 0.25:  # Looser threshold for crowded scenes
+            if iou_matrix[track_idx, det_idx] > self.iou_match_threshold:
                 matches.append((track_idx, det_idx))
         
         return matches
+
+    def _expand_bbox(self, bbox):
+        """Expand a box around its center for tolerant crowded-scene IoU matching."""
+        scale = self.expanded_iou_scale
+        if scale <= 1.0:
+            return bbox
+        x1, y1, x2, y2 = bbox
+        cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+        half_width = (x2 - x1) * scale / 2.0
+        half_height = (y2 - y1) * scale / 2.0
+        return np.array([
+            cx - half_width, cy - half_height,
+            cx + half_width, cy + half_height,
+        ])
     
     def _compute_iou(self, bbox1, bbox2):
         """Compute IoU between two bounding boxes"""
@@ -634,5 +736,3 @@ class DeepSORT:
                      self.max_age, feature)
         self.tracks.append(track)
         self.next_id += 1
-
-

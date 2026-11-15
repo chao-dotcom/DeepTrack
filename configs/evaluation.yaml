@@ -1,0 +1,72 @@
+dataset:
+  root: data/raw/MOT20/MOT20/train
+  sequences: [MOT20-01, MOT20-02, MOT20-03, MOT20-05]
+  iou_threshold: 0.5
+
+run:
+  output_dir: outputs/mot_measurements
+  max_frames: null
+  wandb: false
+  wandb_project: deeptrack-mot20
+
+variants:
+  baseline_yolov8x_640:
+    model_path: models/checkpoints/yolov8x.pt
+    detection:
+      conf_threshold: 0.5
+      iou_threshold: 0.45
+      imgsz: 640
+      max_det: 300
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 50
+      n_init: 5
+      high_confidence: 0.5
+      min_confidence: 0.15
+      iou_match_threshold: 0.25
+      gating_threshold: 9.4877
+      appearance_weight: 0.8
+      expanded_iou_scale: 1.0
+      association_mode: legacy
+  updated_yolov8x_1280:
+    model_path: models/checkpoints/yolov8x.pt
+    detection:
+      conf_threshold: 0.15
+      iou_threshold: 0.65
+      imgsz: 1280
+      max_det: 1000
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 50
+      n_init: 5
+      high_confidence: 0.5
+      min_confidence: 0.15
+      iou_match_threshold: 0.25
+      gating_threshold: 9.4877
+      appearance_weight: 0.8
+      expanded_iou_scale: 1.0
+      association_mode: two_stage
+  tuned_two_stage_public:
+    model_path: models/checkpoints/yolov8x.pt
+    detection:
+      conf_threshold: 0.15
+      iou_threshold: 0.65
+      imgsz: 1280
+      max_det: 1000
+      classes: [0]
+    tracking:
+      max_dist: 0.32
+      max_iou_distance: 0.7
+      max_age: 80
+      n_init: 3
+      high_confidence: 0.5
+      min_confidence: 0.15
+      iou_match_threshold: 0.2
+      gating_threshold: 12.0
+      appearance_weight: 0.5
+      expanded_iou_scale: 1.1
+      association_mode: two_stage

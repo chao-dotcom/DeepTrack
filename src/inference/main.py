@@ -77,6 +77,7 @@ def main():
                        help="Input video file, camera index (0 for webcam), or image sequence directory")
     parser.add_argument("--output", help="Output video file path (optional)")
     parser.add_argument("--model", help="Path to model checkpoint")
+    parser.add_argument("--config", help="Path to tracking YAML configuration")
     parser.add_argument("--display", action="store_true", help="Display video output")
     
     args = parser.parse_args()
@@ -130,7 +131,21 @@ def main():
     use_detection = False
     
     if DETECTION_AVAILABLE:
-        model_path = args.model or 'yolov8n.pt'
+        config = {}
+        if args.config:
+            try:
+                import yaml
+                with open(args.config, 'r') as config_file:
+                    config = yaml.safe_load(config_file) or {}
+            except (OSError, ImportError) as exc:
+                print(f"Error loading config '{args.config}': {exc}")
+                sys.exit(1)
+            except Exception as exc:
+                print(f"Invalid config '{args.config}': {exc}")
+                sys.exit(1)
+
+        detection_config = config.get('detection', {})
+        model_path = args.model or detection_config.get('model_path', 'yolov8x.pt')
         # Check if model exists locally
         if not os.path.exists(model_path):
             # Try in checkpoints directory
@@ -139,10 +154,16 @@ def main():
                 model_path = checkpoint_path
             else:
                 print(f"Model not found at {model_path}, using default (will auto-download)")
-                model_path = 'yolov8n.pt'
+                model_path = 'yolov8x.pt'
         
         try:
-            detector = YOLODetector(model_path=model_path, confidence_threshold=0.5)
+            detector = YOLODetector(
+                model_path=model_path,
+                confidence_threshold=detection_config.get('conf_threshold', 0.15),
+                nms_iou=detection_config.get('iou_threshold', 0.65),
+                image_size=detection_config.get('imgsz', 1280),
+                classes=detection_config.get('classes', [0]),
+            )
             tracker = SimpleTracker(max_disappeared=30, max_distance=100.0)
             use_detection = True
             print("✓ Detection and tracking enabled")
@@ -292,4 +313,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -15,7 +15,10 @@ except ImportError:
     print("Warning: ultralytics not available. Detection will not work.")
 
 from src.models.tracking.deepsort import DeepSORT
-from src.models.reid.reid_model import ReIDModel
+try:
+    from src.models.reid.reid_model import ReIDModel
+except ImportError:
+    ReIDModel = None
 
 
 class DeepSORTVideoTracker:
@@ -27,13 +30,16 @@ class DeepSORTVideoTracker:
         self.config = config or {
             'detection': {
                 'conf_threshold': 0.15,  # Lower threshold
-                'iou_threshold': 0.45   # Add NMS
+                'iou_threshold': 0.65,  # Retain overlapping people
+                'imgsz': 1280,
+                'classes': [0],
             },
             'tracking': {
                 'max_dist': 0.32,  # Increase for more flexibility
                 'max_iou_distance': 0.7,
                 'max_age': 50,  # Increased for better persistence
-                'n_init': 5  # Reduce from 7 to 5 for faster confirmation
+                'n_init': 5,  # Reduce from 7 to 5 for faster confirmation
+                'high_confidence': 0.5
             }
         }
         
@@ -54,7 +60,7 @@ class DeepSORTVideoTracker:
         
         # Load ReID model if provided
         self.reid_model = None
-        if reid_model_path and Path(reid_model_path).exists():
+        if reid_model_path and Path(reid_model_path).exists() and ReIDModel is not None:
             try:
                 checkpoint = torch.load(reid_model_path, map_location=self.device)
                 num_classes = checkpoint.get('num_classes', 751)
@@ -77,7 +83,24 @@ class DeepSORTVideoTracker:
             max_dist=self.config['tracking']['max_dist'],
             max_iou_distance=self.config['tracking']['max_iou_distance'],
             max_age=self.config['tracking']['max_age'],
-            n_init=self.config['tracking']['n_init']
+            n_init=self.config['tracking']['n_init'],
+            high_confidence=self.config['tracking'].get('high_confidence', 0.5),
+            min_confidence=self.config['tracking'].get(
+                'min_confidence',
+                self.config['detection'].get('conf_threshold', 0.15),
+            ),
+            iou_match_threshold=self.config['tracking'].get(
+                'iou_match_threshold', 0.25
+            ),
+            gating_threshold=self.config['tracking'].get(
+                'gating_threshold', 9.4877
+            ),
+            appearance_weight=self.config['tracking'].get(
+                'appearance_weight', 0.8
+            ),
+            expanded_iou_scale=self.config['tracking'].get(
+                'expanded_iou_scale', 1.0
+            ),
         )
     
     def process_video(self, video_path: str, output_path: Optional[str] = None, 
@@ -299,11 +322,17 @@ class DeepSORTVideoTracker:
             # Use lower confidence threshold and NMS
             conf_threshold = self.config['detection'].get('conf_threshold', 0.15)
             iou_threshold = self.config['detection'].get('iou_threshold', 0.45)
+            image_size = self.config['detection'].get('imgsz', 1280)
+            classes = self.config['detection'].get('classes', [0])
+            max_det = self.config['detection'].get('max_det', 300)
             
             results = self.detector(
                 frame, 
                 conf=conf_threshold, 
                 iou=iou_threshold,
+                imgsz=image_size,
+                max_det=max_det,
+                classes=classes,
                 verbose=False
             )
             
@@ -388,7 +417,10 @@ class DeepSORTVideoTracker:
 # Configuration
 default_config = {
     'detection': {
-        'conf_threshold': 0.25
+        'conf_threshold': 0.15,
+        'iou_threshold': 0.65,
+        'imgsz': 1280,
+        'classes': [0]
     },
     'tracking': {
         'max_dist': 0.2,
@@ -404,7 +436,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DeepSORT Video Tracker')
     parser.add_argument('--input', type=str, required=True, help='Input video or image sequence')
     parser.add_argument('--output', type=str, help='Output video path')
-    parser.add_argument('--detection-model', type=str, default='models/checkpoints/yolov8n.pt',
+    parser.add_argument('--detection-model', type=str, default='models/checkpoints/yolov8x.pt',
                        help='Path to detection model')
     parser.add_argument('--reid-model', type=str, help='Path to ReID model (optional)')
     parser.add_argument('--config', type=str, help='Path to config file')
@@ -438,4 +470,3 @@ if __name__ == '__main__':
         tracker.save_results(results, str(results_path))
     
     print(f"\nStatistics: {results['statistics']}")
-

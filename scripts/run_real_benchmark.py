@@ -31,7 +31,8 @@ def run_tracking(sequence_path, output_dir):
         sys.executable, "-m", "src.inference.deepsort_tracker",
         "--input", str(sequence_path),
         "--output", str(output_video),
-        "--detection-model", "models/checkpoints/yolov8n.pt"
+        "--detection-model", "models/checkpoints/yolov8x.pt",
+        "--config", "configs/tracking_config.yaml"
     ]
     
     print(f"Command: {' '.join(cmd)}")
@@ -243,4 +244,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

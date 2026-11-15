@@ -14,7 +14,7 @@ Get up and running with the People Tracking System in minutes.
 
 ```bash
 # Navigate to project directory
-cd people-tracking-system
+cd DeepTrack
 
 # Create virtual environment (recommended)
 python -m venv venv
@@ -38,7 +38,8 @@ pip install -r requirements.txt
 python scripts/download_models.py
 ```
 
-The model will be saved to `models/checkpoints/yolov8n.pt`.
+The default model is `models/checkpoints/yolov8x.pt`; use `yolov8n.pt` only for
+fast smoke tests.
 
 ## Quick Test
 
@@ -137,4 +138,3 @@ Models auto-download on first use. If issues:
 ---
 
 **Ready to track!** 🚀
-

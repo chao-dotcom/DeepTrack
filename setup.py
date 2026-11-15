@@ -1,11 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="people-tracking-system",
+    name="deeptrack",
     version="0.1.0",
-    description="A comprehensive people tracking system",
-    author="Your Name",
-    author_email="your.email@example.com",
+    description="Reproducible multi-object tracking evaluation on MOT20",
+    author="chao-dotcom",
     packages=find_packages(),
     install_requires=[
         "numpy>=1.21.0",
@@ -30,4 +29,3 @@ setup(
         ],
     },
 )
-
