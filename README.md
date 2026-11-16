@@ -2,10 +2,8 @@
 
 **Multi-object people tracking on dense MOT20 crowds, built from the algorithms up, with a reproducible evaluation pipeline.**
 
-> 🔗 **Follow-up to [MOT](https://github.com/chao-dotcom/MOT)**, my from-scratch SORT implementation focused on algorithm correctness. DeepTrack takes it from algorithm to system: adding appearance-based association, a reproducible MOT20 evaluation pipeline, and integration with existing tools (YOLO detectors, TrackEval).
-
 DeepSORT-style tracker (Kalman filter + appearance matching) with a ByteTrack-style two-stage association, evaluated with TrackEval (HOTA / MOTA / IDF1).
-
+QD
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-orange.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
@@ -37,16 +35,12 @@ MOT20 training sequences, public detections, **online** tracking (no interpolati
 
 **Takeaway:** MOTA holds steady across scenes, while association quality (AssA) drops as crowds get denser (46% → 29%). Identity association, not detection, is the measured bottleneck, and it is the focus of ongoing work.
 
-> Training-sequence, public-detection results: **not leaderboard-comparable**. Full protocol, ablations, and negative results are in [`docs/`](docs/).
-
 ---
 
 ## Workflow
 
 <!-- TODO: replace with the detailed pipeline diagram -->
 ![Workflow diagram](docs/images/workflow.png)
-
-*Placeholder: detailed workflow graph (detections → Kalman prediction → two-stage association → track lifecycle → evaluation).*
 
 ---
 
