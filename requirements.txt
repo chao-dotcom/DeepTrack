@@ -1,51 +1,51 @@
 # Core dependencies
-numpy==2.2.6
-opencv-python==4.12.0.88
-pillow==12.0.0
+numpy==2.3.2
+opencv-python==4.13.0.92
+pillow==11.3.0
 
 # Deep Learning
 torch==2.9.1
 torchvision==0.24.1
-ultralytics==8.3.229  # For YOLOv8 person detection
+ultralytics==8.4.215  # For YOLOv8 person detection
 # tensorflow>=2.6.0  # Uncomment if using TensorFlow
 
 # API Framework
-fastapi>=0.68.0
-uvicorn[standard]>=0.15.0
-pydantic>=1.8.0
+fastapi==0.116.2
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
 
 # Web UI (if using Streamlit)
-streamlit>=1.0.0
+streamlit==1.49.1
 
 # Utilities
 pyyaml==6.0.3
-python-dotenv>=0.19.0
-tqdm>=4.62.0
+python-dotenv==1.1.1
+tqdm==4.67.1
 
 # Tracking
 scipy==1.16.3  # For Kalman filtering and optimization
-scikit-learn>=1.0.0  # For clustering (trajectory analysis, density estimation)
+scikit-learn==1.7.2  # For clustering (trajectory analysis, density estimation)
 
 # Evaluation
 motmetrics==1.4.0
 trackeval==1.3.0
 
 # Production API (optional)
-redis>=4.0.0  # For job queue
-celery>=5.2.0  # For background tasks
+redis==5.0.1  # For job queue
+celery==5.5.3  # For background tasks
 
 # Optimization (optional)
-onnxruntime>=1.10.0  # For ONNX inference
+onnxruntime==1.23.0  # For ONNX inference
 # tensorrt  # Install separately if using TensorRT
 
 # Research extensions (optional)
 # torch-geometric  # For GNN tracker (install separately)
 
 # Utilities
-albumentations>=1.1.0  # For data augmentation
-wandb>=0.12.0  # For experiment tracking (optional)
+albumentations==2.0.8  # For data augmentation
+wandb==0.21.4  # For experiment tracking (optional)
 
 # Development
-pytest>=6.2.0
-black>=21.0.0
-flake8>=3.9.0
+pytest==8.4.2
+black==25.9.0
+flake8==7.3.0
